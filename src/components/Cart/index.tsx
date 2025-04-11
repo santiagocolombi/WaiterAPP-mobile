@@ -2,24 +2,42 @@ import { FlatList, TouchableOpacity } from "react-native";
 import { CartItem } from "../../types/CartItem";
 import { Text } from "../Text";
 import { Summary } from "./styles";
-import { Item, ProductContainer, Actions ,Image, QuantityContainer, ProductDetails,TotalContainer} from "./styles";
+import { Item, ProductContainer, Actions ,Image, QuantityContainer, ProductDetails,TotalContainer, } from "./styles";
 import { formatCurrency } from "../../utils/FormatCurrency";
 import { PlusCircle } from "../Icons/PlusCircle";
 import { MinusCircle } from "../Icons/MinusCircle";
 import { Button } from "../Button";
 import { Product } from "../../types/Product";
+import { useState } from "react";
+import { OrderConfirmedModal } from "../OrderConfirmedModal";
 
 interface CartProps{
     cartItems: CartItem[];
     onAdd: (product : Product) => void;
+    onDecrement: (product : Product) => void;
+    onConfirmOrder: () => void
 }
 
-export function Cart ({cartItems, onAdd}: CartProps){
+export function Cart ({cartItems, onAdd, onDecrement, onConfirmOrder}: CartProps){
+    const [isLoading] = useState(false)
+    const [isModalVisible, setIsModalVisible] = useState(false)
     const total = cartItems.reduce((acc, cartItem) => {
         return acc + cartItem.quantity * cartItem.product.price
-    }, 0)
+    }, 0);
+    function handleConfirmOrder(){
+        setIsModalVisible(true)
+    }
+    function handleOK(){
+        onConfirmOrder();
+        setIsModalVisible(false)
+    }
     return(
         <>
+        <OrderConfirmedModal visible={isModalVisible}
+        onOK={handleOK}/>
+
+
+
        {cartItems.length > 0 && (
          <FlatList data={cartItems}
          style={{marginBottom: 20, maxHeight: 150}}
@@ -47,7 +65,7 @@ export function Cart ({cartItems, onAdd}: CartProps){
 
                          </PlusCircle>
                      </TouchableOpacity>
-                     <TouchableOpacity>
+                     <TouchableOpacity onPress={() => onDecrement(cartItem.product)}>
                          <MinusCircle>
 
                          </MinusCircle>
@@ -68,9 +86,10 @@ export function Cart ({cartItems, onAdd}: CartProps){
                 )}
             </TotalContainer>
 
-            <Button onPress={() => alert('u.u')}
-                disabled={cartItems.length === 0}>
-                Conformar pedido
+            <Button onPress={handleConfirmOrder}
+                disabled={cartItems.length === 0}
+                loading={isLoading}>
+                Confirmar pedido
             </Button>
         </Summary>
         </>
